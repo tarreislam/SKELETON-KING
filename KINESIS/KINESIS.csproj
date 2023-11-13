@@ -12,4 +12,10 @@
     <InternalsVisibleTo Include="TRANSMUTANSTEIN" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="Matchmaking\MatchmakingConfiguration.JSON">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>
