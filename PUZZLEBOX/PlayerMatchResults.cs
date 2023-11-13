@@ -4,7 +4,7 @@
 [Index(nameof(datetime), IsUnique = false)]
 public class PlayerMatchResults
 {
-    public string nickname { get; set; }
+    public string nickname { get; set; } = null!;
     public string? clan_tag { get; set; }
     public int clan_id { get; set; }
     public int team { get; set; }

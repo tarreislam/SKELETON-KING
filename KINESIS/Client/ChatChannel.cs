@@ -27,8 +27,9 @@ public class ChatChannelUser
 public class ChatChannel
 {
     private static int _lastChannelId = 0;
-    private readonly int _id;
+    private int _id;
     private readonly string _name;
+    private readonly string _upperCaseName;
     private readonly string _topic;
     private readonly ChatChannelFlags _flags;
     private readonly List<ChatChannelUser> _users = new();
@@ -38,13 +39,10 @@ public class ChatChannel
 
     public ChatChannel(string name, string upperCaseName, string topic, ChatChannelFlags flags)
     {
-        _id = Interlocked.Increment(ref _lastChannelId);
         _name = name;
+        _upperCaseName = upperCaseName;
         _topic = topic;
         _flags = flags;
-
-        ChatServer.ChatChannelsByChannelId[_id] = this;
-        ChatServer.ChatChannelsByUpperCaseName[upperCaseName] = this;
     }
 
     public bool Add(ConnectedClient connectedClient)
@@ -99,6 +97,13 @@ public class ChatChannel
                 return false;
             }
 
+            if (_users.Count == 0)
+            {
+                // Lazily initialize _id upon first user added to the channel.
+                _id = Interlocked.Increment(ref _lastChannelId);
+                ChatServer.ChatChannelsByChannelId[_id] = this;
+            }
+
             _users.Add(newUser);
         }
 
@@ -133,8 +138,8 @@ public class ChatChannel
             if (_users.Count == 0)
             {
                 // Channel became empty. Dispose of it.
-                ChatServer.ChatChannelsByUpperCaseName.TryRemove(_name.ToUpper(), out _);
-                ChatServer.ChatChannelsByChannelId.TryRemove(_id, out _);
+                ChatServer.ChatChannelsByUpperCaseName.TryRemove(new KeyValuePair<string,ChatChannel>(_upperCaseName, this));
+                ChatServer.ChatChannelsByChannelId.TryRemove(new KeyValuePair<int, ChatChannel>(_id, this));
 
                 remainingUsers = Array.Empty<ChatChannelUser>();
             }

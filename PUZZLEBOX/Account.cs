@@ -53,14 +53,14 @@ public class Account
     public string? Cookie { get; set; }
 
     [Required]
-    public PlayerSeasonStatsRanked PlayerSeasonStatsRanked { get; set; }
+    public PlayerSeasonStatsRanked PlayerSeasonStatsRanked { get; set; } = null!;
 
     [Required]
-    public PlayerSeasonStatsRankedCasual PlayerSeasonStatsRankedCasual { get; set; }
+    public PlayerSeasonStatsRankedCasual PlayerSeasonStatsRankedCasual { get; set; } = null!;
 
     [Required]
-    public PlayerSeasonStatsPublic PlayerSeasonStatsPublic { get; set; }
+    public PlayerSeasonStatsPublic PlayerSeasonStatsPublic { get; set; } = null!;
 
     [Required]
-    public PlayerSeasonStatsMidWars PlayerSeasonStatsMidWars { get; set; }
+    public PlayerSeasonStatsMidWars PlayerSeasonStatsMidWars { get; set; } = null!;
 }

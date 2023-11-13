@@ -39,59 +39,33 @@ public class JoinChannelRequest : ProtocolRequest<ConnectedClient>
 
     private static bool TryJoiningChannel(string channelName, string upperCaseChannelName, ConnectedClient connectedClient)
     {
-        ChatChannel chatChannel;
-        if (ChatServer.ChatChannelsByUpperCaseName.TryGetValue(upperCaseChannelName, out var existingChatChannel))
+        ChatChannelFlags flagsToCreateChatChannelWith;
+        if (upperCaseChannelName.StartsWith("CLAN "))
         {
-            // Existing channel is found.
-            if (existingChatChannel.Flags.HasFlag(ChatChannelFlags.CannotBeJoined))
+            // Do not let people not in the clan join.
+            string clanNameUpperCase = upperCaseChannelName[5..]; // Skip the "Clan " part of the "Clan <Clan Name>".
+            if (clanNameUpperCase != connectedClient.ClientInformation.UpperCaseClanName)
             {
-                // Cannot be joined manually.
+                // Player doesn't belong to this clan.
                 return false;
             }
 
-            if (upperCaseChannelName.StartsWith("CLAN "))
-            {
-                // Do not let people not in the clan join.
-                string clanNameUpperCase = upperCaseChannelName[5..]; // Skip the "Clan " part of the "Clan <Clan Name>".
-                if (clanNameUpperCase != connectedClient.ClientInformation.UpperCaseClanName)
-                {
-                    // Player doesn't belong to this clan.
-                    return false;
-                }
-            }
-
-            chatChannel = existingChatChannel;
+            // Unclear if Reserved is necessary or not.
+            flagsToCreateChatChannelWith = ChatChannelFlags.Reserved | ChatChannelFlags.Clan;
         }
         else
         {
-            // Existing channel is NOT found.
-            ChatChannelFlags flagsToCreateChatChannelWith;
-            if (upperCaseChannelName.StartsWith("CLAN "))
-            {
-                // Do not let people not in the clan join.
-                string clanNameUpperCase = upperCaseChannelName[5..]; // Skip the "Clan " part of the "Clan <Clan Name>".
-                if (clanNameUpperCase != connectedClient.ClientInformation.UpperCaseClanName)
-                {
-                    // Player doesn't belong to this clan.
-                    return false;
-                }
-
-                // Unclear if Reserved is necessary or not.
-                flagsToCreateChatChannelWith = ChatChannelFlags.Reserved | ChatChannelFlags.Clan;
-            }
-            else
-            {
-                flagsToCreateChatChannelWith = ChatChannelFlags.GeneralUse;
-            }
-
-            chatChannel = new ChatChannel(channelName, upperCaseChannelName, $"Welcome To The {channelName} Channel", flagsToCreateChatChannelWith);
-            if (!ChatServer.ChatChannelsByUpperCaseName.TryAdd(upperCaseChannelName, chatChannel))
-            {
-                // Chat channel already exists? Try again.
-                return TryJoiningChannel(channelName, upperCaseChannelName, connectedClient);
-            }
+            flagsToCreateChatChannelWith = ChatChannelFlags.GeneralUse;
         }
 
-        return chatChannel.Add(connectedClient);
+        ChatChannel newChatChannel = new ChatChannel(channelName, upperCaseChannelName, $"Welcome To The {channelName} Channel", flagsToCreateChatChannelWith);
+        ChatChannel newOrExistingChatChannel = ChatServer.ChatChannelsByUpperCaseName.GetOrAdd(upperCaseChannelName, newChatChannel);
+        if (newOrExistingChatChannel.Flags.HasFlag(ChatChannelFlags.CannotBeJoined))
+        {
+            // Cannot be joined manually.
+            return false;
+        }
+
+        return newOrExistingChatChannel.Add(connectedClient);
     }
 }
