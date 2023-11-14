@@ -5,9 +5,9 @@ public record ShowSimpleStatsData(
     int TotalExperience,
     int NumberOfHeroesOwned,
     int TotalMatchesPlayed,
-    int NumberOfMVPAwards,
-    ICollection<string> UnlockedUpgradeCodes,
+    CombinedPlayerAwardSummary CombinedPlayerAwardSummary,
     ICollection<string> SelectedUpgradeCodes,
+    ICollection<string> UnlockedUpgradeCodes,
     int AccountId,
     int SeasonId,
     SeasonShortSummary SeasonNormal,
@@ -15,7 +15,7 @@ public record ShowSimpleStatsData(
 
 public class ShowSimpleStatsHandler : IClientRequesterHandler
 {
-    private const int NumberOfHeroesTheGameHas = 1239;
+    private const int NumberOfHeroesTheGameHas = 139;
 
     // In Heroes of Newerth, there is a slightly different logic when computing stats for Seasons <= 6 and Seasons > 6.
     // Additionally, season id must be < 1000. 22 was chosen somewhat arbitrarily and primarily because revival started
@@ -41,15 +41,24 @@ public class ShowSimpleStatsHandler : IClientRequesterHandler
                 /* TotalLevel: */ 0,
                 /* TotalExperience: */ 0,
                 /* NumberOfHeroesOwned: */ NumberOfHeroesTheGameHas,
-                /* TotalMatchesPlayed: */ 0,
-                /* NumberOfMVPAwards: */ 0,
+                /* TotalMatchesPlayed: */ 
+                    // Public
+                    account.PlayerSeasonStatsPublic.Wins + account.PlayerSeasonStatsPublic.Losses +
+                    // Ranked
+                    account.PlayerSeasonStatsRanked.Wins + account.PlayerSeasonStatsRanked.Losses +
+                    // Casual
+                    account.PlayerSeasonStatsRankedCasual.Wins + account.PlayerSeasonStatsRankedCasual.Losses +
+                    // Mid Wars
+                    account.PlayerSeasonStatsMidWars.Wins + account.PlayerSeasonStatsMidWars.Losses,
+                /* PlayerAwardSummary: */ CombinedPlayerAwardSummary.AddUp(account.PlayerSeasonStatsPublic.PlayerAwardSummary, account.PlayerSeasonStatsRanked.PlayerAwardSummary, account.PlayerSeasonStatsRankedCasual.PlayerAwardSummary, account.PlayerSeasonStatsMidWars.PlayerAwardSummary),
                 /* SelectedUpgrades: */ account.SelectedUpgradeCodes,
                 /* UnlockedUpgradeCodes: */ account.User.UnlockedUpgradeCodes,
                 /* AccountId: */ account.AccountId,
                 /* SeasonId: */ CurrentSeason,
-                /* SeasonNormal: */ new SeasonShortSummary(0, 0, 0, 0),
-                /* SeasonCasual: */ new SeasonShortSummary(0, 0, 0, 0))
+                /* SeasonNormal: */ new SeasonShortSummary(account.PlayerSeasonStatsRanked.Wins + account.PlayerSeasonStatsMidWars.Wins, account.PlayerSeasonStatsRanked.Losses + account.PlayerSeasonStatsMidWars.Losses, 0, 0),
+                /* SeasonCasual: */ new SeasonShortSummary(account.PlayerSeasonStatsRankedCasual.Wins, account.PlayerSeasonStatsRankedCasual.Losses, 0, 0))
             )
+            .AsNoTracking()
             .FirstOrDefaultAsync();
 
         if (data is null)
@@ -65,14 +74,14 @@ public class ShowSimpleStatsHandler : IClientRequesterHandler
             data.NumberOfHeroesOwned,
             data.UnlockedUpgradeCodes.Count(upgrade => upgrade.StartsWith("aa.")),
             data.TotalMatchesPlayed,
-            data.NumberOfMVPAwards,
+            data.CombinedPlayerAwardSummary.MVP,
             data.SelectedUpgradeCodes,
             data.AccountId,
             data.SeasonId,
             data.SeasonNormal,
             data.SeasonCasual,
-            new(),
-            new()
+            data.CombinedPlayerAwardSummary.Top4Names,
+            data.CombinedPlayerAwardSummary.Top4Nums
         );
         return new OkObjectResult(PHP.Serialize(showSimpleStatsResponse));
     }
