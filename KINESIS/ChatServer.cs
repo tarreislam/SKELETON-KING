@@ -1,10 +1,4 @@
-﻿using KINESIS.Client;
-using KINESIS.Gamefinder;
-using KINESIS.Matchmaking;
-using Microsoft.Extensions.Configuration;
-using System.Reflection;
-
-namespace KINESIS;
+﻿namespace KINESIS;
 
 public class ChatServer
 {
@@ -13,10 +7,10 @@ public class ChatServer
     private readonly TcpListener _clientListener;
 
     public static readonly ConcurrentDictionary<int, ConnectedClient> ConnectedClientsByAccountId = new();
-    public static readonly ConcurrentDictionary<int, ChatChannel> ChatChannelsByChannelId = new();
-    public static readonly ConcurrentDictionary<string, ChatChannel> ChatChannelsByUpperCaseName = new();
+    public static readonly ConcurrentDictionary<int, Client.ChatChannel> ChatChannelsByChannelId = new();
+    public static readonly ConcurrentDictionary<string, Client.ChatChannel> ChatChannelsByUpperCaseName = new();
 
-    public static MatchmakingSettingsResponse MatchmakingSettingsResponse = null!;
+    public static Matchmaking.MatchmakingSettingsResponse MatchmakingSettingsResponse = null!;
 
     public ChatServer(IDbContextFactory<BountyContext> dbContextFactory, IConfiguration configuration)
     {
@@ -60,23 +54,23 @@ public class ChatServer
         }
     }
 
-    private static MatchmakingSettingsResponse CreateMatchmakingSettingsResponse(IConfiguration configuration)
+    private static Matchmaking.MatchmakingSettingsResponse CreateMatchmakingSettingsResponse(IConfiguration configuration)
     {
         string BasePath = Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? string.Empty, "Matchmaking");
-        MatchmakingConfiguration matchmakingConfiguration = System.Text.Json.JsonSerializer.Deserialize<MatchmakingConfiguration>(File.ReadAllText(Path.Combine(BasePath, "MatchmakingConfiguration.JSON")))!;
+        Matchmaking.MatchmakingConfiguration matchmakingConfiguration = System.Text.Json.JsonSerializer.Deserialize<Matchmaking.MatchmakingConfiguration>(File.ReadAllText(Path.Combine(BasePath, "MatchmakingConfiguration.JSON")))!;
 
-        MatchmakingMapConfiguration caldavar = matchmakingConfiguration.Caldavar;
-        MatchmakingMapConfiguration midwars = matchmakingConfiguration.MidWars;
+        Matchmaking.MatchmakingMapConfiguration caldavar = matchmakingConfiguration.Caldavar;
+        Matchmaking.MatchmakingMapConfiguration midwars = matchmakingConfiguration.MidWars;
 
         string enabledRegions = string.Join('|', caldavar.Regions);
 
         // This list appears to only be used by the old UI and must match
         // the maps/modes enabled below.
-        List<TMMGameType> enabledGameTypes = new()
-            {
-                TMMGameType.MIDWARS,
-                TMMGameType.CAMPAIGN_NORMAL
-            };
+        List<GameFinder.TMMGameType> enabledGameTypes = new()
+        {
+            GameFinder.TMMGameType.MIDWARS,
+            GameFinder.TMMGameType.CAMPAIGN_NORMAL
+        };
 
         List<string> enabledMaps = new();
         if (caldavar.Modes.Length != 0)
@@ -117,7 +111,7 @@ public class ChatServer
             numberOfEnabledRegions = enabledRegions.Count(c => c == '|') + 1;
         }
 
-        return new MatchmakingSettingsResponse(
+        return new Matchmaking.MatchmakingSettingsResponse(
             matchmakingAvailability: numberOfEnabledRegions == 0 ? (byte)0 : (byte)1,
             availableMaps: string.Join("|", enabledMaps),
             gameTypes: string.Join("|", enabledGameTypes),

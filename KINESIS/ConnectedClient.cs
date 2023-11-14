@@ -1,12 +1,10 @@
-﻿using KINESIS.Client;
-
-namespace KINESIS;
+﻿namespace KINESIS;
 
 public class ClientInformation
 {
     public readonly string DisplayedName;
-    public readonly ChatClientFlags ChatClientFlags;
-    public readonly ChatClientStatus ChatClientStatus;
+    public readonly Client.ChatClientFlags ChatClientFlags;
+    public readonly Client.ChatClientStatus ChatClientStatus;
     public readonly string SelectedChatSymbolCode;
     public readonly string SelectedChatNameColourCode;
     public readonly string SelectedAccountIconCode;
@@ -15,8 +13,8 @@ public class ClientInformation
 
     public ClientInformation(
         string displayedName,
-        ChatClientFlags chatClientFlags,
-        ChatClientStatus chatClientStatus,
+        Client.ChatClientFlags chatClientFlags,
+        Client.ChatClientStatus chatClientStatus,
         string selectedChatSymbolCode,
         string selectedChatNameColourCode,
         string selectedAccountIconCode,
@@ -39,10 +37,12 @@ public class ConnectedClient : IConnectedSubject
     private readonly ChatServerConnection<ConnectedClient> _chatServerConnection;
     private int _accountId;
     private ClientInformation _clientInformation = null!;
-    private readonly List<ChatChannel> _chatChannels = new();
+    private readonly List<Client.ChatChannel> _chatChannels = new();
+    private Matchmaking.MatchmakingGroup? _matchmakingGroup = null;
 
     public int AccountId => _accountId;
     public ClientInformation ClientInformation => _clientInformation;
+    public Matchmaking.MatchmakingGroup? MatchmakingGroup => _matchmakingGroup;
 
     public ConnectedClient(Socket socket, IProtocolRequestFactory<ConnectedClient> requestFactory, IDbContextFactory<BountyContext> dbContextFactory)
     {
@@ -51,16 +51,16 @@ public class ConnectedClient : IConnectedSubject
 
     public void Disconnect(string disconnectReason)
     {
-        ChatServer.ConnectedClientsByAccountId.Remove(_accountId, out _);
+        ChatServer.ConnectedClientsByAccountId.TryRemove(new KeyValuePair<int,ConnectedClient>(_accountId, this));
 
-        ChatChannel[] chatChannels;
+        Client.ChatChannel[] chatChannels;
         lock (this)
         {
             chatChannels = _chatChannels.ToArray();
             _chatChannels.Clear();
         }
 
-        foreach (ChatChannel chatChannel in chatChannels)
+        foreach (Client.ChatChannel chatChannel in chatChannels)
         {
             chatChannel.Remove(this, notifyClient: false);
         }
@@ -71,6 +71,12 @@ public class ConnectedClient : IConnectedSubject
     public void Start()
     {
         _chatServerConnection.Start();
+    }
+
+    public bool ReconnectToLastGame()
+    {
+        // Not implemented.
+        return false;
     }
 
     public void SendResponse(ProtocolResponse response)
@@ -96,7 +102,7 @@ public class ConnectedClient : IConnectedSubject
     /// </summary>
     /// <param name="chatChannel">The chat channel that the client has joined.</param>
     /// <param name="response">A notification to send back to the client.</param>
-    public void NotifyAddedToChatChannel(ChatChannel chatChannel, ProtocolResponse response)
+    public void NotifyAddedToChatChannel(Client.ChatChannel chatChannel, ProtocolResponse response)
     {
         lock (this)
         {
@@ -115,7 +121,7 @@ public class ConnectedClient : IConnectedSubject
 
     // 
     // response para
-    public void NotifyRemovedFromChatChannel(ChatChannel chatChannel, ProtocolResponse? response)
+    public void NotifyRemovedFromChatChannel(Client.ChatChannel chatChannel, ProtocolResponse? response)
     {
         lock (this)
         {
@@ -125,5 +131,10 @@ public class ConnectedClient : IConnectedSubject
         {
             _chatServerConnection.EnqueueResponse(response);
         }
+    }
+
+    public Matchmaking.MatchmakingGroup? ReplaceMatchmakingGroup(Matchmaking.MatchmakingGroup? newGroup)
+    {
+        return Interlocked.Exchange(ref _matchmakingGroup, newGroup);
     }
 }

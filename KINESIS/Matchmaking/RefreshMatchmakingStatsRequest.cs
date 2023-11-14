@@ -35,5 +35,8 @@ public class RefreshMatchmakingStatsRequest : ProtocolRequest<ConnectedClient>
             ))
             .FirstOrDefault()!;
         connectedClient.SendResponse(refreshMatchmakingStatsRequestResponse);
+
+        // The game doesn't always seem to request matchamking settings.
+        connectedClient.SendResponse(ChatServer.MatchmakingSettingsResponse);
     }
 }

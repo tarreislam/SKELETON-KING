@@ -1,4 +1,4 @@
-﻿namespace KINESIS.Gamefinder;
+﻿namespace KINESIS.GameFinder;
 
 /// <summary>
 ///     Values Are Defined In "matchmaking.lua"

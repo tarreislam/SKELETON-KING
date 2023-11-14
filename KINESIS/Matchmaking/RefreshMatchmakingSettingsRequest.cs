@@ -1,7 +1,4 @@
-﻿
-using KINESIS.Client;
-
-namespace KINESIS.Matchmaking;
+﻿namespace KINESIS.Matchmaking;
 
 public class RefreshMatchmakingSettingsRequest : ProtocolRequest<ConnectedClient>
 {
