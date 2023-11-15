@@ -1,0 +1,1 @@
+Static files used for some endpoints, should be moved to a table
