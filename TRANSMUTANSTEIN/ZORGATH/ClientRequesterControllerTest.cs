@@ -3,7 +3,7 @@
 [TestClass]
 public class ClientRequesterControllerTest
 {
-    private class TestClientRequesterHandler : IClientRequesterHandler
+    private class TestClientRequesterHandler : IRequesterHandler
     {
         private readonly IActionResult _result;
         public TestClientRequesterHandler(IActionResult result)
@@ -23,7 +23,7 @@ public class ClientRequesterControllerTest
         IActionResult expected = new OkResult();
 
         // Register our fake ClientRequesterHandler.
-        Dictionary<string, IClientRequesterHandler> handlers = new()
+        Dictionary<string, IRequesterHandler> handlers = new()
         {
             ["test"] = new TestClientRequesterHandler(expected)
         };
@@ -42,7 +42,7 @@ public class ClientRequesterControllerTest
     [TestMethod]
     public async Task UnknownRequest()
     {
-        ClientRequesterController controller = new(new Dictionary<string, IClientRequesterHandler>());
+        ClientRequesterController controller = new(new Dictionary<string, IRequesterHandler>());
         Dictionary<string, string> formData = new()
         {
             ["f"] = "test2"
@@ -56,7 +56,7 @@ public class ClientRequesterControllerTest
     [TestMethod]
     public async Task UnspecifiedRequest()
     {
-        ClientRequesterController controller = new(new Dictionary<string, IClientRequesterHandler>());
+        ClientRequesterController controller = new(new Dictionary<string, IRequesterHandler>());
         Dictionary<string, string> formData = new();
 
         // Trigger an unspecified request.

@@ -1,7 +1,7 @@
 namespace ZORGATH;
 
 
-public class AutoCompleteNicksHandler : IClientRequesterHandler
+public class AutoCompleteNicksHandler : IRequesterHandler
 {
     public async Task<IActionResult> HandleRequest(ControllerContext controllerContext, Dictionary<string, string> formData)
     {

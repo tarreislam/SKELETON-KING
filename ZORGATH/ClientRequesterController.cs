@@ -6,9 +6,9 @@
 
 public class ClientRequesterController : ControllerBase
 {
-    private readonly IReadOnlyDictionary<string, IClientRequesterHandler> _clientRequesterHandlers;
+    private readonly IReadOnlyDictionary<string, IRequesterHandler> _clientRequesterHandlers;
 
-    public ClientRequesterController(IReadOnlyDictionary<string, IClientRequesterHandler> clientRequesterHandlers)
+    public ClientRequesterController(IReadOnlyDictionary<string, IRequesterHandler> clientRequesterHandlers)
     {
         _clientRequesterHandlers = clientRequesterHandlers;
     }

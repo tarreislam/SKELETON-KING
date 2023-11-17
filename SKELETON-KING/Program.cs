@@ -21,8 +21,8 @@ public class Program
 
         ConcurrentDictionary<string, SrpAuthSessionData> srpAuthSessions = new();
 
-        builder.Services.AddSingleton<IReadOnlyDictionary<string, IClientRequesterHandler>>(
-            new Dictionary<string, IClientRequesterHandler>()
+        builder.Services.AddSingleton<IReadOnlyDictionary<string, IRequesterHandler>>(
+            new Dictionary<string, IRequesterHandler>()
             {
                 // NOTE: Please keep this list alphabetized by the string literal in the key.
                 {"autocompleteNicks", new AutoCompleteNicksHandler() },
